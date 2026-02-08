@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=420">
+    <title>Regex Tester Pro</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-brand">
+            <img src="../../assets/icons/icon-48.png" alt="" class="header-logo" width="20" height="20">
+            <span class="header-title">Regex Tester Pro</span>
+            <span class="pro-badge" id="proBadge" hidden>⭐ Pro</span>
+        </div>
+        <div class="header-actions">
+            <button class="btn-icon" id="helpBtn" title="Help Center">❓</button>
+            <button class="btn-icon" id="cheatSheetBtn" title="Regex Cheat Sheet">📋</button>
+            <button class="btn-icon" id="themeToggle" title="Toggle theme">🌓</button>
+            <button class="btn-icon" id="settingsBtn" title="Settings">⚙️</button>
+        </div>
+    </header>
+
+    <!-- Regex Input -->
+    <section class="section">
+        <div class="regex-input-row">
+            <span class="regex-delimiter">/</span>
+            <input type="text" id="patternInput" class="pattern-input" placeholder="Enter regex pattern..."
+                autocomplete="off" spellcheck="false">
+            <span class="regex-delimiter">/</span>
+            <div class="flags-row" id="flagsRow">
+                <button class="flag-btn active" data-flag="g" title="Global">g</button>
+                <button class="flag-btn" data-flag="i" title="Case insensitive">i</button>
+                <button class="flag-btn" data-flag="m" title="Multiline">m</button>
+                <button class="flag-btn" data-flag="s" title="Dotall">s</button>
+                <button class="flag-btn" data-flag="u" title="Unicode">u</button>
+                <button class="flag-btn" data-flag="y" title="Sticky">y</button>
+            </div>
+        </div>
+        <div class="error-line" id="errorLine" hidden></div>
+
+        <!-- Quick Insert Palette -->
+        <div class="quick-insert-bar" id="quickInsertBar">
+            <button class="qi-toggle" id="qiToggle" title="Toggle regex building blocks">⚡ Insert</button>
+            <div class="qi-palette" id="qiPalette" hidden></div>
+        </div>
+    </section>
+
+    <!-- Test String -->
+    <section class="section">
+        <label class="section-label">Test String</label>
+        <div class="test-string-wrap" id="testStringWrap">
+            <div class="highlighted-layer" id="highlightedLayer"></div>
+            <textarea id="testString" class="test-string" rows="5" placeholder="Enter test string..."
+                spellcheck="false"></textarea>
+        </div>
+    </section>
+
+    <!-- Match Results -->
+    <section class="section" id="matchSection">
+        <div class="section-label-row">
+            <label class="section-label">Matches</label>
+            <span class="perf-badge" id="perfBadge" hidden title="Pattern safety analysis">🟢 Safe</span>
+            <span class="match-count" id="matchCount">0 found</span>
+        </div>
+        <div class="match-results" id="matchResults">
+            <div class="empty-state">Enter a pattern and test string to see matches</div>
+        </div>
+    </section>
+
+    <!-- Multi-Test Results -->
+    <section class="section" id="multiTestSection" hidden>
+        <div class="section-label-row">
+            <label class="section-label">Multi-String Test</label>
+            <button class="btn-icon btn-xs" id="closeMultiTest" title="Exit multi-test mode">✕</button>
+        </div>
+        <div class="multi-test-results" id="multiTestResults"></div>
+    </section>
+
+    <!-- Capture Groups -->
+    <section class="section" id="groupSection" hidden>
+        <label class="section-label">Capture Groups</label>
+        <div class="group-results" id="groupResults"></div>
+    </section>
+
+    <!-- Pattern Explainer -->
+    <section class="section collapse" id="explainerSection">
+        <button class="section-toggle" id="explainerToggle">
+            <span>🧠 Pattern Explanation</span>
+            <span class="toggle-arrow">▸</span>
+        </button>
+        <div class="collapse-body" id="explainerBody" hidden>
+            <div class="explainer-list" id="explainerList">
+                <div class="empty-state" style="font-size:11px">Type a pattern to see a breakdown</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Find & Replace -->
+    <section class="section collapse" id="replaceSection">
+        <button class="section-toggle" id="replaceToggle">
+            <span>Find &amp; Replace</span>
+            <span class="toggle-arrow">▸</span>
+        </button>
+        <div class="collapse-body" id="replaceBody" hidden>
+            <input type="text" id="replaceInput" class="replace-input" placeholder="Replacement string..."
+                spellcheck="false">
+            <div class="replace-result" id="replaceResult"></div>
+        </div>
+    </section>
+
+    <!-- Action Buttons -->
+    <section class="actions">
+        <button class="btn btn-primary" id="aiGenerateBtn" title="Describe a pattern in English (Ctrl+G)">
+            🤖 AI Generate <span class="pro-pill" id="aiCounter">3/3</span>
+        </button>
+        <button class="btn btn-secondary" id="samplesBtn" title="Browse regex examples (Ctrl+E)">📖 Examples</button>
+        <button class="btn btn-secondary" id="codeExportBtn" title="Export regex as code">💻 Export</button>
+        <button class="btn btn-secondary" id="multiTestBtn" title="Test multiple strings">🧪 Multi</button>
+        <button class="btn btn-secondary" id="shareBtn" title="Share this pattern">🔗 Share</button>
+        <button class="btn btn-secondary" id="savePatternBtn" title="Save pattern (Ctrl+S)">💾 Save</button>
+        <button class="btn btn-secondary" id="copyBtn" title="Copy regex (Ctrl+C)">📋 Copy</button>
+    </section>
+
+    <!-- Code Export Panel (slide-over) -->
+    <div class="panel-overlay" id="codeExportOverlay" hidden></div>
+    <aside class="codeexport-panel" id="codeExportPanel" hidden>
+        <div class="panel-header">
+            <h3>💻 Code Export</h3>
+            <button class="btn-icon" id="closeCodeExport">✕</button>
+        </div>
+        <div class="code-lang-tabs" id="codeLangTabs"></div>
+        <div class="panel-body">
+            <pre class="code-export-output" id="codeExportOutput"></pre>
+            <button class="btn btn-primary btn-sm btn-block" id="copyCodeBtn">📋 Copy Code</button>
+        </div>
+    </aside>
+
+    <!-- Cheat Sheet Panel (slide-over) -->
+    <div class="panel-overlay" id="cheatSheetOverlay" hidden></div>
+    <aside class="cheatsheet-panel" id="cheatSheetPanel" hidden>
+        <div class="panel-header">
+            <h3>📋 Regex Cheat Sheet</h3>
+            <button class="btn-icon" id="closeCheatSheet">✕</button>
+        </div>
+        <div class="panel-body cheatsheet-body">
+            <div class="cs-group">
+                <div class="cs-title">Characters</div>
+                <div class="cs-row"><code>.</code><span>Any character (except newline)</span></div>
+                <div class="cs-row"><code>\d</code><span>Digit [0-9]</span></div>
+                <div class="cs-row"><code>\D</code><span>Non-digit</span></div>
+                <div class="cs-row"><code>\w</code><span>Word char [A-Za-z0-9_]</span></div>
+                <div class="cs-row"><code>\W</code><span>Non-word char</span></div>
+                <div class="cs-row"><code>\s</code><span>Whitespace</span></div>
+                <div class="cs-row"><code>\S</code><span>Non-whitespace</span></div>
+            </div>
+            <div class="cs-group">
+                <div class="cs-title">Quantifiers</div>
+                <div class="cs-row"><code>*</code><span>0 or more</span></div>
+                <div class="cs-row"><code>+</code><span>1 or more</span></div>
+                <div class="cs-row"><code>?</code><span>0 or 1 (optional)</span></div>
+                <div class="cs-row"><code>{n}</code><span>Exactly n times</span></div>
+                <div class="cs-row"><code>{n,m}</code><span>Between n and m</span></div>
+                <div class="cs-row"><code>*?</code><span>Lazy (non-greedy)</span></div>
+            </div>
+            <div class="cs-group">
+                <div class="cs-title">Anchors & Boundaries</div>
+                <div class="cs-row"><code>^</code><span>Start of string/line</span></div>
+                <div class="cs-row"><code>$</code><span>End of string/line</span></div>
+                <div class="cs-row"><code>\b</code><span>Word boundary</span></div>
+            </div>
+            <div class="cs-group">
+                <div class="cs-title">Groups & Lookaround</div>
+                <div class="cs-row"><code>(abc)</code><span>Capture group</span></div>
+                <div class="cs-row"><code>(?:abc)</code><span>Non-capture group</span></div>
+                <div class="cs-row"><code>(?&lt;name&gt;abc)</code><span>Named group</span></div>
+                <div class="cs-row"><code>(?=abc)</code><span>Positive lookahead</span></div>
+                <div class="cs-row"><code>(?!abc)</code><span>Negative lookahead</span></div>
+                <div class="cs-row"><code>(?&lt;=abc)</code><span>Positive lookbehind</span></div>
+                <div class="cs-row"><code>\1</code><span>Backreference to group 1</span></div>
+            </div>
+            <div class="cs-group">
+                <div class="cs-title">Character Classes</div>
+                <div class="cs-row"><code>[abc]</code><span>Any of a, b, or c</span></div>
+                <div class="cs-row"><code>[^abc]</code><span>Not a, b, or c</span></div>
+                <div class="cs-row"><code>[a-z]</code><span>Range a to z</span></div>
+                <div class="cs-row"><code>[A-Z0-9]</code><span>Combined ranges</span></div>
+            </div>
+            <div class="cs-group">
+                <div class="cs-title">Flags</div>
+                <div class="cs-row"><code>g</code><span>Global — find all matches</span></div>
+                <div class="cs-row"><code>i</code><span>Case-insensitive</span></div>
+                <div class="cs-row"><code>m</code><span>Multiline (^ $ per line)</span></div>
+                <div class="cs-row"><code>s</code><span>Dotall (. matches newline)</span></div>
+                <div class="cs-row"><code>u</code><span>Unicode support</span></div>
+            </div>
+            <div class="cs-group">
+                <div class="cs-title">⌨️ Keyboard Shortcuts</div>
+                <div class="cs-row"><code>Ctrl+E</code><span>Open Examples</span></div>
+                <div class="cs-row"><code>Ctrl+S</code><span>Save Pattern</span></div>
+                <div class="cs-row"><code>Ctrl+H</code><span>Open History</span></div>
+                <div class="cs-row"><code>Esc</code><span>Close any panel</span></div>
+            </div>
+        </div>
+    </aside>
+
+
+    <!-- Samples Panel (slide-over) -->
+    <div class="panel-overlay" id="samplesOverlay" hidden></div>
+    <aside class="samples-panel" id="samplesPanel" hidden>
+        <div class="panel-header">
+            <h3>📖 Regex Examples</h3>
+            <button class="btn-icon" id="closeSamples">✕</button>
+        </div>
+        <div class="samples-categories" id="samplesCategoryTabs"></div>
+        <div class="panel-body" id="samplesList"></div>
+    </aside>
+
+    <!-- History Panel (slide-over) -->
+    <div class="panel-overlay" id="historyOverlay" hidden></div>
+    <aside class="history-panel" id="historyPanel" hidden>
+        <div class="panel-header">
+            <h3>Pattern History</h3>
+            <button class="btn-icon" id="closeHistory">✕</button>
+        </div>
+        <div class="panel-body" id="historyList"></div>
+        <div class="panel-footer">
+            <span id="historyCount">0/10</span>
+            <button class="btn btn-ghost" id="clearHistoryBtn">Clear All</button>
+        </div>
+    </aside>
+
+    <!-- Settings Panel -->
+    <div class="panel-overlay" id="settingsOverlay" hidden></div>
+    <aside class="settings-panel" id="settingsPanel" hidden>
+        <div class="panel-header">
+            <h3>Settings</h3>
+            <button class="btn-icon" id="closeSettings">✕</button>
+        </div>
+        <div class="panel-body">
+            <div class="setting-row">
+                <span>Theme</span>
+                <select id="themeSetting">
+                    <option value="system">System</option>
+                    <option value="light">Light</option>
+                    <option value="dark">Dark</option>
+                </select>
+            </div>
+            <div class="setting-row">
+                <span>Auto-save patterns</span>
+                <input type="checkbox" id="autoSaveSetting" checked>
+            </div>
+            <div class="setting-row">
+                <span>Default flags</span>
+                <input type="text" id="defaultFlagsSetting" value="g" class="small-input">
+            </div>
+            <hr>
+            <div style="padding:10px 0 6px;text-align:center">
+                <div style="font-size:16px;margin-bottom:4px">⭐</div>
+                <div style="font-size:13px;font-weight:600;margin-bottom:4px">Unlock Pro Features</div>
+                <div style="font-size:11px;color:var(--text-muted);line-height:1.5;margin-bottom:8px">
+                    Get unlimited AI generations, multi-flavor regex, unlimited history, and more with a Zovo Pro
+                    license.
+                </div>
+                <a href="https://zovo.one" target="_blank" rel="noopener noreferrer"
+                    class="btn btn-primary btn-sm btn-block" style="margin-bottom:10px">
+                    Get a License at zovo.one →
+                </a>
+            </div>
+            <div class="setting-row">
+                <span>License Key</span>
+                <input type="text" id="licenseKeyInput" placeholder="Enter Pro key..." class="small-input">
+            </div>
+            <button class="btn btn-primary btn-sm" id="validateLicenseBtn">Validate</button>
+        </div>
+        <div class="panel-footer" style="gap:8px">
+            <a href="#" id="openGuideLink" class="zovo-link" title="User Guide">📐 Guide</a>
+            <a href="https://zovo.one" target="_blank" class="zovo-link">Zovo</a>
+            <span class="version-text" id="versionText">v1.0.0</span>
+        </div>
+    </aside>
+
+    <!-- Paywall Modal -->
+    <div class="modal-overlay" id="paywallOverlay" hidden>
+        <div class="modal" id="paywallModal">
+            <div class="modal-icon" id="paywallIcon">🤖</div>
+            <h3 class="modal-title" id="paywallTitle">AI Generations Used Up</h3>
+            <p class="modal-body" id="paywallBody">Unlock unlimited AI-powered regex generation with Pro.</p>
+            <button class="btn btn-primary btn-block" id="paywallCta">Upgrade to Pro — $4.99/mo</button>
+            <button class="btn btn-ghost btn-block" id="paywallDismiss">Maybe later</button>
+        </div>
+    </div>
+
+    <!-- More from Zovo (Cross-Promotion) -->
+    <section class="section promo-section" id="promoSection">
+        <label class="section-label">More from Zovo</label>
+        <div class="promo-list" id="promoList"></div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-left">
+            <span id="usageFooter">History: 0/10 · AI: 3/3 today</span>
+        </div>
+        <a href="https://zovo.one?ref=regex-tester-pro&source=footer" target="_blank" class="zovo-footer">Zovo</a>
+    </footer>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="../shared/error-handler.js"></script>
+    <script src="../shared/storage.js"></script>
+    <script src="../shared/payments.js"></script>
+    <script src="../shared/analytics.js"></script>
+    <script src="../shared/feature-config.js"></script>
+    <script src="../shared/catalog.js"></script>
+    <script src="../shared/performance.js"></script>
+    <script src="../shared/security.js"></script>
+    <script src="../shared/upgrade-prompts.js"></script>
+    <script src="../shared/samples.js"></script>
+    <script src="../shared/explainer.js"></script>
+    <script src="../shared/code-export.js"></script>
+    <script src="../shared/perf-analyzer.js"></script>
+    <script src="../shared/quick-insert.js"></script>
+    <script src="popup.js"></script>
+</body>
+
+</html>
