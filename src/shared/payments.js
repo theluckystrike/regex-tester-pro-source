@@ -1,12 +1,12 @@
 // ==========================================================================
 // Regex Tester Pro — Payment & License Verification
-// Agent 4: Feature gating, license check, AI quota
+// Handles Pro license validation and feature gating
 // ==========================================================================
 
 const Payments = (() => {
     'use strict';
 
-    const API_BASE = 'https://xggdjlurppfcytxqoozs.supabase.co/functions/v1';
+    const API_BASE = 'https://api.zovo.one/v1';
     const FREE_AI_LIMIT = 3;
     const FREE_HISTORY_LIMIT = 10;
 
@@ -49,7 +49,7 @@ const Payments = (() => {
             await Storage.saveLicense(license);
             return license;
         } catch (e) {
-            // Network error — use cached
+            // Network error — use cached license
             const { zovoLicense } = await chrome.storage.local.get('zovoLicense');
             return zovoLicense || { valid: false };
         }
@@ -81,53 +81,6 @@ const Payments = (() => {
         return isPro().then(pro => pro ? Infinity : FREE_HISTORY_LIMIT);
     }
 
-    // MD 09: Paywall hit tracking — triggers drip email sequence via Zovo API
-    async function logPaywallHit(feature, context = {}) {
-        try {
-            const { zovoLicense } = await chrome.storage.local.get('zovoLicense');
-            await fetch(`${API_BASE}/log-paywall-hit`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    extensionId: 'regex-tester-pro',
-                    chromeExtensionId: chrome.runtime.id,
-                    featureAttempted: feature,
-                    userEmail: zovoLicense?.email || null,
-                    context: {
-                        ...context,
-                        version: chrome.runtime.getManifest().version,
-                        timestamp: new Date().toISOString()
-                    }
-                })
-            });
-        } catch (e) {
-            // Fire and forget — don't break UX on tracking failure
-        }
-    }
-
-    // MD 09: Send analytics batch to Zovo API
-    async function sendAnalyticsBatch() {
-        try {
-            const { analytics_events } = await chrome.storage.local.get('analytics_events');
-            if (!analytics_events || analytics_events.length === 0) return;
-
-            await fetch(`${API_BASE}/collect-analytics`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    extensionId: 'regex-tester-pro',
-                    events: analytics_events.slice(-50),
-                    version: chrome.runtime.getManifest().version
-                })
-            });
-
-            // Clear sent events
-            await chrome.storage.local.set({ analytics_events: [] });
-        } catch (e) {
-            // Silently fail — retry on next alarm cycle
-        }
-    }
-
     return {
         isPro,
         validateLicense,
@@ -135,8 +88,6 @@ const Payments = (() => {
         getAIRemaining,
         decrementAI,
         getHistoryLimit,
-        logPaywallHit,
-        sendAnalyticsBatch,
         FREE_AI_LIMIT,
         FREE_HISTORY_LIMIT
     };

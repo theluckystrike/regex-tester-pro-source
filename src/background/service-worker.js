@@ -82,7 +82,7 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
         const { zovoLicense } = await chrome.storage.local.get('zovoLicense');
         if (zovoLicense && zovoLicense.key) {
             try {
-                const response = await fetch('https://xggdjlurppfcytxqoozs.supabase.co/functions/v1/verify-extension-license', {
+                const response = await fetch('https://api.zovo.one/v1/verify-extension-license', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
